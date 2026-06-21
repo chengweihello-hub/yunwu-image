@@ -583,14 +583,14 @@
 
         // ========== Text to Image ==========
         async function generateTxt2Img() {
-            const apiKey = getApiKey();
+            //const apiKey = getApiKey();
             const prompt = document.getElementById('t2iPrompt').value.trim();
             const quality = document.getElementById('t2iQuality').value;
             const size = document.getElementById('t2iSize').value;
             const format = document.getElementById('t2iFormat').value;
             const count = parseInt(document.getElementById('t2iCount').value);
 
-            if (!apiKey) return showError('t2iStatus', '请输入 API Key');
+            //if (!apiKey) return showError('t2iStatus', '请输入 API Key');
             if (!prompt) return showError('t2iStatus', '请输入图片描述');
 
             const btn = document.getElementById('t2iBtn');
@@ -603,7 +603,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer sk-qu0hSlQVdgbS5GTFJ2T5wDvdzhJVgPIc7c4XocJJOJDJHo45`
                     },
                     body: JSON.stringify({
                         model: 'gpt-image-2',
@@ -625,14 +625,14 @@
 
         // ========== Image to Image ==========
         async function generateImg2Img() {
-            const apiKey = getApiKey();
+            //const apiKey = getApiKey();
             const prompt = document.getElementById('i2iPrompt').value.trim();
             const model = document.getElementById('i2iModel').value;
             const quality = document.getElementById('i2iQuality').value;
             const size = document.getElementById('i2iSize').value;
             const count = document.getElementById('i2iCount').value;
 
-            if (!apiKey) return showError('i2iStatus', '请输入 API Key');
+            //if (!apiKey) return showError('i2iStatus', '请输入 API Key');
             if (uploadedFiles.length === 0) return showError('i2iStatus', '请上传至少一张参考图');
             if (!prompt) return showError('i2iStatus', '请输入描述');
 
@@ -650,12 +650,13 @@
                 formData.append('n', count);
                 formData.append('size', size);
                 formData.append('quality', quality);
+                formData.append('moderation', 'low');
 
                 const response = await fetch('https://yunwu.ai/v1/images/edits', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'Authorization': `Bearer sk-qu0hSlQVdgbS5GTFJ2T5wDvdzhJVgPIc7c4XocJJOJDJHo45`
                     },
                     body: formData
                 });
