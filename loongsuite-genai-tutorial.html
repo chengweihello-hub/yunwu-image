@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿里巴巴&蚂蚁 LoongSuite GenAI 可观测语义规范 - 教学指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #34a853;
+            --accent-color: #fbbc04;
+            --danger-color: #ea4335;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #2a2a4a;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* 英雄区域 */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 2rem;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--gradient-1);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero h1 .highlight {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator::after {
+            content: '↓';
+            font-size: 2rem;
+            color: var(--text-secondary);
+        }
+
+        /* 内容区域 */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon.blue { background: rgba(26, 115, 232, 0.2); }
+        .card-icon.green { background: rgba(52, 168, 83, 0.2); }
+        .card-icon.yellow { background: rgba(251, 188, 4, 0.2); }
+        .card-icon.red { background: rgba(234, 67, 53, 0.2); }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* 时间线 */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gradient-1);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 50%;
+            position: relative;
+            margin-bottom: 3rem;
+        }
+
+        .timeline-item:nth-child(even) {
+            justify-content: flex-start;
+            padding-right: 0;
+            padding-left: 50%;
+        }
+
+        .timeline-content {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 0 2rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            max-width: 400px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid var(--dark-bg);
+        }
+
+        .timeline-date {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn.active {
+            background: var(--gradient-1);
+            color: white;
+            border-color: transparent;
+        }
+
+        .tab-btn:hover:not(.active) {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-block pre {
+            color: #e6edf3;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-block .comment { color: #8b949e; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .function { color: #d2a8ff; }
+
+        /* 特性列表 */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 1rem 0;
+            padding-left: 2rem;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* 对比表格 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: rgba(26, 115, 232, 0.1);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* 统计数字 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* 折叠面板 */
+        .accordion {
+            margin: 2rem 0;
+        }
+
+        .accordion-item {
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .accordion-header {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-body.active {
+            max-height: 2000px;
+        }
+
+        .accordion-content {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* 警告框 */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .alert-info {
+            background: rgba(26, 115, 232, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .alert-warning {
+            background: rgba(251, 188, 4, 0.1);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .alert-success {
+            background: rgba(52, 168, 83, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        /* 引用块 */
+        blockquote {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* 页脚 */
+        footer {
+            background: var(--card-bg);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            margin-top: 5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .section-title { font-size: 1.8rem; }
+            .nav-links { display: none; }
+            .timeline::before { left: 20px; }
+            .timeline-item,
+            .timeline-item:nth-child(even) {
+                justify-content: flex-start;
+                padding-left: 50px;
+                padding-right: 0;
+            }
+            .timeline-dot { left: 20px; }
+        }
+
+        /* 滚动显示动画 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🐉 LoongSuite</div>
+            <ul class="nav-links">
+                <li><a href="#background">背景</a></li>
+                <li><a href="#semconv">SemConv</a></li>
+                <li><a href="#enhancements">增强内容</a></li>
+                <li><a href="#utils">GenAI Utils</a></li>
+                <li><a href="#conclusion">结语</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <header class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-badge">🔬 技术深度解析</div>
+            <h1>阿里巴巴&蚂蚁 <span class="highlight">LoongSuite GenAI</span><br>可观测语义规范</h1>
+            <p class="hero-subtitle">
+                从统一数据语言到规模化落地<br>
+                全面掌握 GenAI 时代的可观测性建设
+            </p>
+            <div class="cta-buttons">
+                <a href="#background" class="btn btn-primary">开始学习</a>
+                <a href="https://github.com/alibaba/loongsuite-semantic-conventions-genai" target="_blank" class="btn btn-secondary">查看 GitHub</a>
+            </div>
+        </div>
+        <div class="scroll-indicator"></div>
+    </header>
+
+    <!-- 背景介绍 -->
+    <section class="section" id="background">
+        <h2 class="section-title reveal">📖 背景介绍</h2>
+        <p class="section-subtitle reveal">为什么需要 GenAI 可观测语义规范？</p>
+        
+        <div class="card-grid reveal">
+            <div class="card">
+                <div class="card-icon blue">🤖</div>
+                <h3>GenAI 新概念的涌现</h3>
+                <p>随着 AI 快速发展，AI Agent 系统中涌现出 Model、Prompt、Token、Tool Calling、Agent、Memory、Session 等新的核心概念。这些概念需要像传统系统中的 HTTP 请求、数据库调用一样，被标准化地采集、展示和消费。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon green">📊</div>
+                <h3>可观测数据标准缺失</h3>
+                <p>相关领域存在可观测数据采集标准缺失、口径不统一等问题。不同团队各自记录"模型名"、"输入长度"、"Token 数"等信息，字段命名和统计口径无法对齐。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon yellow">🌍</div>
+                <h3>OpenTelemetry 的推动</h3>
+                <p>OTel 在 2024 年初开始推动 GenAI 语义规范建设，希望为这些新对象建立统一的数据采集规范——Semantic Conventions（SemConv），解决跨模型、跨框架、跨平台的观测标准问题。</p>
+            </div>
+        </div>
+
+        <blockquote class="reveal">
+            "SemConv 是 OTel 的灵魂，推动其逐步完善并走向 Stable 是社区最重要的工作。"<br>
+            <small>— OTel 社区核心 Maintainer</small>
+        </blockquote>
+    </section>
+
+    <!-- SemConv 定位与价值 -->
+    <section class="section" id="semconv" style="background: rgba(255,255,255,0.02);">
+        <h2 class="section-title reveal">🎯 SemConv 定位与价值</h2>
+        <p class="section-subtitle reveal">统一的可观测数据语言能带来什么？</p>
+
+        <div class="stats-grid reveal">
+            <div class="stat-item">
+                <div class="stat-number">统一</div>
+                <div class="stat-label">数据语言</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4大</div>
+                <div class="stat-label">治理维度</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">降低</div>
+                <div class="stat-label">接入成本</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">推动</div>
+                <div class="stat-label">基础设施复用</div>
+            </div>
+        </div>
+
+        <div class="card-grid reveal">
+            <div class="card">
+                <div class="card-icon blue">🔗</div>
+                <h3>统一数据语言</h3>
+                <p>OTel GenAI SemConv 为核心概念提供标准化字段：</p>
+                <ul style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary);">
+                    <li><code>gen_ai.system</code></li>
+                    <li><code>gen_ai.request.model</code></li>
+                    <li><code>gen_ai.usage.input_tokens</code></li>
+                </ul>
+                <p style="margin-top: 1rem;">不同业务、不同基础设施、不同观测后端共享同一套分析方法，真正做到"同一类问题用同一套数据解释"。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon green">📈</div>
+                <h3>支撑统一治理</h3>
+                <ul class="feature-list" style="margin-top: 1rem;">
+                    <li><strong>技术排查：</strong>通过 Trace ID 查看跨 Agent 完整链路，分钟级定位问题</li>
+                    <li><strong>经营分析：</strong>效果数据跨业务可比，直接用于产品决策</li>
+                    <li><strong>评测：</strong>真实用户轨迹持续积累，自动构建评测数据集</li>
+                    <li><strong>合规：</strong>统一的审计链路，满足安全备案刚性要求</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-icon yellow">🚀</div>
+                <h3>降低接入成本</h3>
+                <p>一旦字段、Span 结构、事件模型和上下文传递方式定义清楚：</p>
+                <ul style="margin-top: 1rem; padding-left: 1.5rem; color: var(--text-secondary);">
+                    <li>无侵入埋点可复用</li>
+                    <li>SDK 封装可复用</li>
+                    <li>平台分析可复用</li>
+                    <li>看板和告警策略可复用</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- LoongSuite 发展历程 -->
+    <section class="section">
+        <h2 class="section-title reveal">📅 LoongSuite 发展历程</h2>
+        <p class="section-subtitle reveal">从内部实践到开源标准</p>
+
+        <div class="timeline reveal">
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-date">2024 年初</div>
+                    <h3>OpenTelemetry 启动</h3>
+                    <p>OTel 社区开始 GenAI 语义规范的讨论和设计，但更新节奏整体较慢。</p>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-date">2025 年</div>
+                    <h3>阿里巴巴&蚂蚁联合启动</h3>
+                    <p>阿里云、阿里控股与蚂蚁集团的可观测团队联合启动，在 OTel GenAI 语义基础上对内部场景进行语义建模，并推进内部可观测采集工具的实现与落地。</p>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-date">2026 年</div>
+                    <h3>开源至 LoongSuite</h3>
+                    <p>与 OTel 社区沟通后，将成果开源至阿里巴巴 LoongSuite 可观测品牌下，作为 OTel GenAI SemConv 的厂商增强标准，后续择机逐步贡献至 OTel 上游。</p>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 增强内容 -->
+    <section class="section" id="enhancements">
+        <h2 class="section-title reveal">✨ LoongSuite GenAI SemConv 增强内容</h2>
+        <p class="section-subtitle reveal">相较于 OTel GenAI SemConv 的核心增强点</p>
+
+        <div class="tabs reveal">
+            <button class="tab-btn active" onclick="showTab('entry-step')">Entry/Step Span</button>
+            <button class="tab-btn" onclick="showTab('skill')">Skill 语义</button>
+            <button class="tab-btn" onclick="showTab('token')">Token 级推理观测</button>
+        </div>
+
+        <!-- Entry/Step Span -->
+        <div id="entry-step" class="tab-content active">
+            <div class="card">
+                <h3>🎯 新增 Entry/Step Span</h3>
+                <div class="alert alert-info">
+                    <strong>问题背景：</strong>当 Agent 执行长程任务时，单个 Trace 中包含成百上千个 Span，导致调用链轨迹难以清晰观测。
+                </div>
+                
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">解决方案</h4>
+                <div class="card-grid" style="margin-top: 1.5rem;">
+                    <div class="card" style="background: rgba(26, 115, 232, 0.05);">
+                        <h4>Entry Span</h4>
+                        <p>在 Agent 调用的入口处创建 Span，用于还原模型和用户的原始输入、输出，形成对话历史。确保处理的数据不受 System Prompt 或框架 Prompt 的干扰，获取最原始的客户请求。</p>
+                    </div>
+                    <div class="card" style="background: rgba(52, 168, 83, 0.05);">
+                        <h4>Step Span</h4>
+                        <p>代表 Agent 在每次 ReAct 过程中的层次化表达。在"反思 → 工具调用 → 模型调用"的循环中，通过逐轮的 Span 结构清晰展示 Agent 的多轮行动、反思及执行结果。</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">排查流程</h4>
+                <ol style="padding-left: 2rem; color: var(--text-secondary);">
+                    <li>观察整体情况（如 Agent 执行包含 10 轮 ReAct 过程）</li>
+                    <li>定位是哪一轮出现问题</li>
+                    <li>深入分析该轮中具体是哪一步出错</li>
+                    <li>通过逐轮 Span 结构快速定位问题</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Skill 语义 -->
+        <div id="skill" class="tab-content">
+            <div class="card">
+                <h3>🛠️ 新增 Skill 语义</h3>
+                <div class="alert alert-warning">
+                    <strong>问题背景：</strong>现有 OTel GenAI 语义已覆盖 Agent、LLM、Tool 等 Span 类型，但缺少对 Skill 这一业务功能聚合层的抽象。
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">三大痛点</h4>
+                <div class="card-grid" style="margin-top: 1.5rem;">
+                    <div class="card">
+                        <div class="card-icon red">1</div>
+                        <h4>无法归因到功能域</h4>
+                        <p>性能抖动时只能看到 execute_tool 和 inference Span，无法快速判断是哪个功能域出了问题。</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon red">2</div>
+                        <h4>无法统计 Skill 健康指标</h4>
+                        <p>缺少 Skill 粒度的 P99 延迟、成功率、调用频率等度量。</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon red">3</div>
+                        <h4>多 Skill 并发时链路混淆</h4>
+                        <p>不同 Skill 的 LLM/Tool Span 在 Trace 树中无法区分归属。</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">语义建模</h4>
+                <p style="margin-bottom: 1rem;">在 LoongSuite GenAI SemConv 中新增了一组 <code>gen_ai.skill.*</code> 属性：</p>
+                <div class="code-block">
+                    <pre>gen_ai.skill.name        # Skill 名称
+gen_ai.skill.version      # Skill 版本
+gen_ai.skill.id           # Skill 唯一标识</pre>
+                </div>
+                <p>当前阶段，这些属性附着在已有的 <code>execute_tool</code> Span 上，无需引入新 Span 类型即可快速落地。同时，基于集团业务落地了独立 <code>invoke_skill</code> Span 的方案。</p>
+            </div>
+        </div>
+
+        <!-- Token 级推理观测 -->
+        <div id="token" class="tab-content">
+            <div class="card">
+                <h3>🔬 新增 Token 级推理观测</h3>
+                <div class="alert alert-success">
+                    <strong>核心价值：</strong>首次将推理引擎内部许多原本"黑盒"的过程拆解到 Token 粒度，打造可透视、可解释、可归因的白盒系统。
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">两大核心问题</h4>
+                <div class="card-grid" style="margin-top: 1.5rem;">
+                    <div class="card">
+                        <div class="card-icon red">⚡</div>
+                        <h4>性能异常</h4>
+                        <p>单个请求响应慢往往是因为某些 Token 生成慢，而 Token 生成慢大概率是其他请求并发干扰导致的。</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon yellow">🎯</div>
+                        <h4>精度异常</h4>
+                        <p>出现复读、答非所问、乱码等精度问题，往往从某个 Token 开始异常，后续 Token 受此影响持续出错。</p>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">Token 性能数据采集</h4>
+                <p>在每个请求的每个 Token 粒度，采集进入迭代和退出迭代的时间戳：</p>
+                <div class="code-block">
+                    <pre># 核心指标
+gen_ai.token.scheduling_time    # 调度时间
+gen_ai.token.execution_time     # 实际执行时间
+gen_ai.token.total_time          # 用户感知的总耗时
+gen_ai.token.batch_size          # Batch 总请求数
+gen_ai.token.batch_token_count   # Batch 总 Token 数</pre>
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">Token 精度数据采集</h4>
+                <p>采集每个 Token 对应的候选 Top-K Token 的概率分布：</p>
+                <div class="code-block">
+                    <pre># 精度相关属性
+gen_ai.token.top_k_candidates       # Top-K 候选 Token
+gen_ai.token.top_k_probabilities    # 对应概率分布
+gen_ai.token.selected_token         # 选中的 Token
+gen_ai.token.sampling_parameters    # 采样参数（温度等）</pre>
+                </div>
+
+                <h4 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">典型案例</h4>
+                <div class="accordion">
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span><strong>案例 1：</strong>慢 Token 定位，快速识别跨请求的资源干扰</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <p>线上某请求 TPOT 破线，Token 分析页面显示第 125 个 Token 花了 6.8 秒。通过引擎并发分析发现，请求 1 的 prefill 阶段（亮绿色块）花了 6s+，中断了请求 2 的 decode 过程（黄色块）。</p>
+                                <div class="alert alert-warning" style="margin-top: 1rem;">
+                                    <strong>根因：</strong>其他租户的请求 prefill 中断了当前请求的 decode 过程。<br>
+                                    <strong>解决方案：</strong>PD 分离，避免不同请求的 prefill 和 decode 相互影响。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAccordion(this)">
+                            <span><strong>案例 2：</strong>Token 级观测，精准定位答非所问的根因</span>
+                            <span class="accordion-icon">▼</span>
+                        </div>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <p>用户问的是医疗问题，但大模型回复了 LeetCode 解题答案。Token 分析页面显示首 Token 是 <code>begin_of_sentence</code>（BOS），这个特殊 Token 被用来分割毫无关联的两个语料。</p>
+                                <div class="alert alert-success" style="margin-top: 1rem;">
+                                    <strong>结论：</strong>一旦出现了 BOS，接下来的回答就跟之前的 prompt 毫无关联，自然而然就答非所问了。后续发现产出 BOS 属于大模型的 badcase，解决方案是调整模型或等待后续模型版本优化更新。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GenAI Utils -->
+    <section class="section" id="utils" style="background: rgba(255,255,255,0.02);">
+        <h2 class="section-title reveal">🛠️ 使用 GenAI Utils 快速实现</h2>
+        <p class="section-subtitle reveal">LoongSuite GenAI SemConv 的工程化能力层</p>
+
+        <div class="alert alert-info reveal">
+            <strong>核心挑战：</strong>每个 GenAI 框架插桩库都需要实现一套完整的遥测采集逻辑，这些逻辑在不同框架插桩间高度重复。当语义规范迭代升级时，若每个插桩库各自维护，升级成本将成倍增长。
+        </div>
+
+        <div class="card-grid reveal">
+            <div class="card">
+                <div class="card-icon blue">1</div>
+                <h3>插桩层只做数据提取</h3>
+                <p>各框架插桩库通过 Hook/Monkey-Patch 拦截框架调用，将数据填充到对应的 Invocation 数据对象中，不直接操作 OTel API。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon green">2</div>
+                <h3>GenAI Utils 统一收口</h3>
+                <p>所有 Span 创建、属性挂载、Metrics 记录、Event 发送、Context 管理均由 ExtendedTelemetryHandler 内部完成。</p>
+            </div>
+            <div class="card">
+                <div class="card-icon yellow">3</div>
+                <h3>规范升级只改一处</h3>
+                <p>当 LoongSuite GenAI SemConv 新增字段或调整结构时，只需修改 GenAI Utils，所有下游插桩库自动生效。</p>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 3rem; margin-bottom: 1.5rem; text-align: center;">API 使用示例（Python）</h3>
+        
+        <div class="card reveal" style="max-width: 900px; margin: 0 auto;">
+            <h4 style="margin-bottom: 1rem;">第一步：获取 Handler 单例</h4>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> opentelemetry.util.genai.extended_handler <span class="keyword">import</span> get_extended_telemetry_handler
+
+<span comment># 获取 ExtendedTelemetryHandler 单例</span>
+handler = get_extended_telemetry_handler()</pre>
+            </div>
+
+            <h4 style="margin: 2rem 0 1rem;">第二步：选择 Invocation 数据类，填充业务数据</h4>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> opentelemetry.util.genai.invocation <span class="keyword">import</span> AgentInvocation
+
+<span comment># 创建 Agent 调用数据对象</span>
+invocation = AgentInvocation(
+    agent_name=<span class="string">"shopping_assistant"</span>,
+    agent_id=<span class="string">"agent_123"</span>,
+    input_tokens=<span class="string">150</span>,
+    output_tokens=<span class="string">80</span>,
+    model=<span class="string">"qwen-turbo"</span>
+)</pre>
+            </div>
+
+            <h4 style="margin: 2rem 0 1rem;">第三步：使用 Context Manager 完成遥测输出</h4>
+            <div class="code-block">
+                <pre><span class="keyword">with</span> handler.start_agent(invocation) <span class="keyword">as</span> span:
+    <span class="comment"># 执行业务逻辑</span>
+    result = agent.execute(user_query)
+    
+    <span class="comment"># 自动完成：</span>
+    <span class="comment"># - Span 创建和结束</span>
+    <span class="comment"># - gen_ai.agent.name 等属性挂载</span>
+    <span class="comment"># - Duration 和 Token Usage Metrics 记录</span>
+    <span class="comment"># - 异常捕获和错误状态设置</span></pre>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 3rem; margin-bottom: 1.5rem; text-align: center;">当前已支持的插桩</h3>
+        <div class="card reveal" style="max-width: 900px; margin: 0 auto;">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>框架/服务</th>
+                        <th>语言</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>OpenClaw</td>
+                        <td>Python</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                    <tr>
+                        <td>LangChain</td>
+                        <td>Python</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                    <tr>
+                        <td>Spring AI</td>
+                        <td>Java</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                    <tr>
+                        <td>Qwen</td>
+                        <td>Python</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                    <tr>
+                        <td>OpenAI</td>
+                        <td>Python/JS</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                    <tr>
+                        <td>vLLM / SGLang / TensorRT-LLM</td>
+                        <td>Python/C++</td>
+                        <td>✅ 已支持</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 对比表格 -->
+    <section class="section">
+        <h2 class="section-title reveal">📊 LoongSuite vs OTel 对比</h2>
+        <p class="section-subtitle reveal">LoongSuite GenAI SemConv 相较于 OTel GenAI SemConv 的核心增强</p>
+
+        <div class="card reveal" style="overflow-x: auto;">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>OTel GenAI SemConv</th>
+                        <th>LoongSuite GenAI SemConv</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>基础 LLM 观测</td>
+                        <td>✅ 支持</td>
+                        <td>✅ 支持（继承）</td>
+                    </tr>
+                    <tr>
+                        <td>Entry/Step Span</td>
+                        <td>❌ 不支持</td>
+                        <td>✅ 新增</td>
+                    </tr>
+                    <tr>
+                        <td>Skill 语义</td>
+                        <td>❌ 不支持</td>
+                        <td>✅ 新增</td>
+                    </tr>
+                    <tr>
+                        <td>Token 级推理观测</td>
+                        <td>❌ 不支持</td>
+                        <td>✅ 新增</td>
+                    </tr>
+                    <tr>
+                        <td>Agent 全链路追踪</td>
+                        <td>⚠️ 基础支持</td>
+                        <td>✅ 增强支持</td>
+                    </tr>
+                    <tr>
+                        <td>多模态异步处理</td>
+                        <td>❌ 不支持</td>
+                        <td>✅ 支持</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 结语 -->
+    <section class="section" id="conclusion">
+        <h2 class="section-title reveal">🎯 结语：从统一字段走向统一基础设施</h2>
+        
+        <div class="card reveal" style="max-width: 900px; margin: 0 auto;">
+            <p style="font-size: 1.1rem; line-height: 2; color: var(--text-secondary);">
+                GenAI 时代的可观测建设，已经从"为模型调用加日志埋点"演进到"为 Prompt、推理、检索、工具和 Agent 全链路建立统一语义"。
+            </p>
+            
+            <div style="margin: 2rem 0; padding: 2rem; background: rgba(26, 115, 232, 0.05); border-radius: 12px;">
+                <h4 style="color: var(--primary-color); margin-bottom: 1rem;">阿里巴巴与蚂蚁集团共建的核心意义：</h4>
+                <ul style="padding-left: 1.5rem; color: var(--text-secondary); line-height: 2;">
+                    <li>把标准化方向进一步<strong>工程化、平台化、规模化</strong></li>
+                    <li>用<strong>统一语义</strong>降低业务接入成本</li>
+                    <li>用<strong>统一数据</strong>驱动观测平台、分析服务和治理能力的复用</li>
+                </ul>
+            </div>
+
+            <p style="font-size: 1.1rem; line-height: 2; color: var(--text-secondary); text-align: center;">
+                <strong style="color: var(--text-primary);">最终目标：</strong>让所有使用该套规范的厂商和用户能够为快速增长的 GenAI 应用真正做到<br>
+                <span style="font-size: 1.3rem; color: var(--primary-color); font-weight: bold;">可看见、可分析、可治理、可演进</span>
+            </p>
+        </div>
+
+        <div class="stats-grid reveal" style="max-width: 800px; margin: 3rem auto;">
+            <div class="stat-item">
+                <div class="stat-number">可看见</div>
+                <div class="stat-label">全链路透明</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">可分析</div>
+                <div class="stat-label">数据驱动决策</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">可治理</div>
+                <div class="stat-label">标准化管理</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">可演进</div>
+                <div class="stat-label">持续迭代优化</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 相关链接 -->
+    <section class="section" style="padding-bottom: 2rem;">
+        <h2 class="section-title reveal">🔗 相关链接</h2>
+        <div class="card-grid reveal">
+            <a href="https://github.com/alibaba/loongsuite-semantic-conventions-genai" target="_blank" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card-icon blue">📋</div>
+                <h3>LoongSuite GenAI SemConv</h3>
+                <p>GitHub 仓库，查看完整的语义规范文档</p>
+            </a>
+            <a href="https://github.com/open-telemetry/semantic-conventions-genai" target="_blank" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card-icon green">🌐</div>
+                <h3>OTel GenAI SemConv</h3>
+                <p>OpenTelemetry 官方 GenAI 语义规范</p>
+            </a>
+            <a href="https://pypi.org/project/loongsuite-util-genai/" target="_blank" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card-icon yellow">🐍</div>
+                <h3>LoongSuite-utils-genai</h3>
+                <p>Python 版本的 GenAI Utils 工具库</p>
+            </a>
+            <a href="https://www.npmjs.com/package/@loongsuite/opentelemetry-util-genai" target="_blank" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card-icon red">📦</div>
+                <h3>LoongSuite-utils-genai (JS)</h3>
+                <p>JavaScript/Node.js 版本的 GenAI Utils 工具库</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="footer-links">
+            <a href="https://github.com/alibaba/loongsuite-semantic-conventions-genai" target="_blank">GitHub</a>
+            <a href="https://github.com/open-telemetry/semantic-conventions-genai" target="_blank">OTel 社区</a>
+            <a href="https://mp.weixin.qq.com/s/X6lh1LuOJgbkJQ8t0Zky1g" target="_blank">原文链接</a>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            基于微信公众号文章整理 · 仅供学习交流使用<br>
+            阿里巴巴&蚂蚁 LoongSuite GenAI 可观测语义规范
+        </p>
+    </footer>
+
+    <script>
+        // 标签页切换
+        function showTab(tabId) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 添加活动状态
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 折叠面板
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            const body = item.querySelector('.accordion-body');
+            
+            // 切换当前项
+            if (body.classList.contains('active')) {
+                body.classList.remove('active');
+                item.classList.remove('active');
+            } else {
+                body.classList.add('active');
+                item.classList.add('active');
+            }
+        }
+
+        // 滚动动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 导航栏滚动效果
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                navbar.style.background = 'rgba(26, 26, 46, 0.98)';
+                navbar.style.boxShadow = '0 2px 20px rgba(0,0,0,0.3)';
+            } else {
+                navbar.style.background = 'rgba(26, 26, 46, 0.95)';
+                navbar.style.boxShadow = 'none';
+            }
+            
+            lastScroll = currentScroll;
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

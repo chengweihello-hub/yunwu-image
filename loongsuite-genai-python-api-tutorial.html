@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小白也能懂！GenAI Utils Python API 手把手教学</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #34a853;
+            --accent-color: #fbbc04;
+            --danger-color: #ea4335;
+            --dark-bg: #1a1a2e;
+            --card-bg: #16213e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #2a2a4a;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        /* 英雄区域 */
+        .hero {
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 2rem;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--gradient-1);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero h1 .highlight {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* 内容区域 */
+        .section {
+            padding: 3rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* 步骤卡片 */
+        .step-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        /* 小白提示框 */
+        .tip-box {
+            background: rgba(251, 188, 4, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .tip-box .tip-title {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* 代码块 */
+        .code-block {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'Python';
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.05);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .code-block pre {
+            color: #e6edf3;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+        .code-function { color: #d2a8ff; }
+        .code-variable { color: #79c0ff; }
+        .code-number { color: #79c0ff; }
+
+        /* 注释说明 */
+        .code-explanation {
+            background: rgba(26, 115, 232, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .code-explanation h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .code-explanation ul {
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .code-explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* 流程图 */
+        .flow-chart {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .flow-step {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .flow-step-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 0.5rem;
+        }
+
+        .flow-step-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .card h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.8rem;
+        }
+
+        /* 警告框 */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .alert-info {
+            background: rgba(26, 115, 232, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .alert-success {
+            background: rgba(52, 168, 83, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: rgba(26, 115, 232, 0.1);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* 页脚 */
+        footer {
+            background: var(--card-bg);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* 动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .section-title { font-size: 1.5rem; }
+            .nav-links { display: none; }
+            .flow-chart { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🐍 Python 小白教程</div>
+            <ul class="nav-links">
+                <li><a href="#setup">环境准备</a></li>
+                <li><a href="#concepts">核心概念</a></li>
+                <li><a href="#steps">三步走</a></li>
+                <li><a href="#complete">完整示例</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <header class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">🌱 小白也能懂</div>
+            <h1>GenAI Utils <span class="highlight">Python API</span><br>手把手教学</h1>
+            <p class="hero-subtitle">
+                不用懂原理，跟着做就行！<br>
+                从零开始，学会用 LoongSuite GenAI Utils 给你的 AI 应用加上可观测性
+            </p>
+        </div>
+    </header>
+
+    <!-- 环境准备 -->
+    <section class="section" id="setup">
+        <h2 class="section-title">📦 环境准备</h2>
+        <p class="section-subtitle">安装依赖，就像安装游戏模组一样简单</p>
+
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h3 class="step-title">安装依赖包</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># 在命令行（终端）里输入以下命令，安装两个 Python 包</span>
+<span class="code-comment"># opentelemetry-util-genai 是核心工具包</span>
+<span class="code-comment"># opentelemetry-sdk 是 OpenTelemetry 的 SDK</span>
+
+pip install opentelemetry-util-genai opentelemetry-sdk</pre>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 小白提示</div>
+                <p>如果你看到命令行，别慌！就是黑色的小窗口。输入上面的命令，按回车，等它跑完就行。就像点外卖下单一样简单。</p>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h3 class="step-title">确认安装成功</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># 在 Python 里输入以下代码，测试是否能正常导入</span>
+<span class="code-keyword">import</span> opentelemetry.util.genai
+
+<span class="code-comment"># 如果没有报错（没有出现红色文字），说明安装成功啦！</span>
+<span class="code-function">print</span>(<span class="code-string">"安装成功！"</span>)</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心概念 -->
+    <section class="section" id="concepts" style="background: rgba(255,255,255,0.02);">
+        <h2 class="section-title">🧠 先搞懂这些概念</h2>
+        <p class="section-subtitle">别担心，我用大白话给你讲</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <h4>🎯 什么是 Span？</h4>
+                <p>想象你在玩赛车游戏，Span 就是游戏里的<strong> checkpoint（检查点）</strong>。每到一个地方就打个卡，最后能看到完整的行驶轨迹。</p>
+            </div>
+            <div class="card">
+                <h4>📊 什么是 Telemetry？</h4>
+                <p>Telemetry 就是<strong>遥测数据</strong>。就像你的智能手表记录心率、步数一样，Telemetry 记录你的 AI 应用在运行时的各种数据。</p>
+            </div>
+            <div class="card">
+                <h4>🤖 什么是 Handler？</h4>
+                <p>Handler 就是<strong>大管家</strong>。你告诉它"我要记录这个 AI 调用"，它会自动帮你搞定所有事情，不用你操心。</p>
+            </div>
+            <div class="card">
+                <h4>📋 什么是 Invocation？</h4>
+                <p>Invocation 就是<strong>调用记录单</strong>。你在这个单子上填写这次 AI 调用的信息（比如用了什么模型、多少 Token），然后交给 Handler 处理。</p>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <div class="tip-title">💡 一句话总结</div>
+            <p>你创建一张<strong>调用记录单（Invocation）</strong>，交给<strong>大管家（Handler）</strong>，大管家会帮你生成<strong>检查点（Span）</strong>，自动记录<strong>遥测数据（Telemetry）</strong>。</p>
+        </div>
+    </section>
+
+    <!-- 三步走 -->
+    <section class="section" id="steps">
+        <h2 class="section-title">🚶 三步走，轻松上手</h2>
+        <p class="section-subtitle">跟着做，保证你会</p>
+
+        <div class="flow-chart">
+            <div class="flow-step">
+                <div class="flow-step-icon">1️⃣</div>
+                <div class="flow-step-text">获取 Handler<br>（找管家）</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-step-icon">2️⃣</div>
+                <div class="flow-step-text">创建 Invocation<br>（填单子）</div>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="flow-step-icon">3️⃣</div>
+                <div class="flow-step-text">使用 with 语句<br>（交给管家）</div>
+            </div>
+        </div>
+
+        <!-- 第一步 -->
+        <div class="step-card" id="step1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h3 class="step-title">获取 Handler 单例（找管家）</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># 第一步：导入获取 Handler 的函数</span>
+<span class="code-comment"># 这行代码的意思是：从 opentelemetry 工具包里的 genai 模块</span>
+<span class="code-comment"># 导入 extended_handler 文件里的 get_extended_telemetry_handler 函数</span>
+<span class="code-keyword">from</span> opentelemetry.util.genai.extended_handler <span class="code-keyword">import</span> get_extended_telemetry_handler
+
+<span class="code-comment"># 第二步：获取 Handler 实例（单例模式）</span>
+<span class="code-comment"># 单例模式的意思是：整个程序中只有一个 Handler，不用重复创建</span>
+<span class="code-comment"># 就像公司里只有一个总经理，你不用每次都招一个新的</span>
+handler = get_extended_telemetry_handler()
+
+<span class="code-comment"># 现在 handler 就是我们的大管家了！</span>
+<span class="code-function">print</span>(<span class="code-string">"管家已就位："</span>, handler)</pre>
+            </div>
+
+            <div class="code-explanation">
+                <h4>📖 代码解释</h4>
+                <ul>
+                    <li><code>from ... import ...</code>：这是 Python 的导入语句，就像从书架上拿一本书下来看</li>
+                    <li><code>get_extended_telemetry_handler()</code>：这是一个函数，调用它会返回一个 Handler 对象</li>
+                    <li><code>handler</code>：这是你给这个大管家起的名字，你可以叫它任何名字（比如 <code>my_handler</code>）</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 小白提示</div>
+                <p>如果你看到 <code>ImportError</code> 报错，说明第一步的安装没成功，回去检查一下。</p>
+            </div>
+        </div>
+
+        <!-- 第二步 -->
+        <div class="step-card" id="step2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h3 class="step-title">创建 Invocation 数据对象（填单子）</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># 第一步：导入 AgentInvocation 类</span>
+<span class="code-comment"># 这个类就像一个表格模板，你按照模板填写信息</span>
+<span class="code-keyword">from</span> opentelemetry.util.genai.invocation <span class="code-keyword">import</span> AgentInvocation
+
+<span class="code-comment"># 第二步：创建一个 Invocation 对象（填表格）</span>
+<span class="code-comment"># 假设我们正在开发一个购物助手 AI Agent</span>
+invocation = AgentInvocation(
+    <span class="code-comment"># Agent 的名称，相当于这个 AI 的名字</span>
+    <span class="code-comment"># 比如你的 AI 叫 "购物小助手"</span>
+    agent_name=<span class="code-string">"shopping_assistant"</span>,
+    
+    <span class="code-comment"># Agent 的唯一 ID，相当于身份证号</span>
+    <span class="code-comment"># 每个 Agent 实例都有一个独特的 ID</span>
+    agent_id=<span class="code-string">"agent_123"</span>,
+    
+    <span class="code-comment"># 输入 Token 数量，即用户说了多少个字（大概）</span>
+    <span class="code-comment"># 这里假设用户输入了 150 个 Token</span>
+    input_tokens=<span class="code-number">150</span>,
+    
+    <span class="code-comment"># 输出 Token 数量，即 AI 回复了多少个字（大概）</span>
+    <span class="code-comment"># 这里假设 AI 回复了 80 个 Token</span>
+    output_tokens=<span class="code-number">80</span>,
+    
+    <span class="code-comment"># 使用的模型名称，就像你用的手机型号</span>
+    <span class="code-comment"># 比如 "qwen-turbo"、"gpt-4" 等</span>
+    model=<span class="code-string">"qwen-turbo"</span>
+)
+
+<span class="code-comment"># 现在 invocation 就是一张填好的记录了！</span>
+<span class="code-function">print</span>(<span class="code-string">"记录单已创建："</span>, invocation)</pre>
+            </div>
+
+            <div class="code-explanation">
+                <h4>📖 代码解释</h4>
+                <ul>
+                    <li><code>AgentInvocation</code>：这是一个<strong>类（Class）</strong>，可以理解为一张表格模板</li>
+                    <li><code>agent_name</code>：Agent 的名字，方便你在监控平台上识别</li>
+                    <li><code>agent_id</code>：唯一标识符，就像身份证号，不能重复</li>
+                    <li><code>input_tokens</code>：输入的 Token 数量，衡量用户输入的大小</li>
+                    <li><code>output_tokens</code>：输出的 Token 数量，衡量 AI 回复的大小</li>
+                    <li><code>model</code>：使用的 AI 模型名称，方便追踪不同模型的性能</li>
+                </ul>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 小白提示</div>
+                <p><strong>Token 是什么？</strong>可以理解为 AI 的最小文字单位。比如"你好"大概是 2-3 个 Token。你不需要精确计算，AI 框架通常会告诉你。</p>
+            </div>
+
+            <h4 style="margin: 2rem 0 1rem; color: var(--primary-color);">AgentInvocation 参数说明表</h4>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>参数名</th>
+                        <th>类型</th>
+                        <th>必填</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>agent_name</code></td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>Agent 名称，如 "shopping_assistant"</td>
+                    </tr>
+                    <tr>
+                        <td><code>agent_id</code></td>
+                        <td>string</td>
+                        <td>是</td>
+                        <td>Agent 唯一标识，如 "agent_123"</td>
+                    </tr>
+                    <tr>
+                        <td><code>input_tokens</code></td>
+                        <td>int</td>
+                        <td>否</td>
+                        <td>输入 Token 数量</td>
+                    </tr>
+                    <tr>
+                        <td><code>output_tokens</code></td>
+                        <td>int</td>
+                        <td>否</td>
+                        <td>输出 Token 数量</td>
+                    </tr>
+                    <tr>
+                        <td><code>model</code></td>
+                        <td>string</td>
+                        <td>否</td>
+                        <td>使用的模型名称，如 "qwen-turbo"</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 第三步 -->
+        <div class="step-card" id="step3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h3 class="step-title">使用 Context Manager 完成遥测输出（交给管家）</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># 第三步：使用 with 语句包裹你的业务代码</span>
+<span class="code-comment"># with 语句是 Python 的一个特性，它会自动帮你"收尾"</span>
+<span class="code-comment"># 就像你去餐厅吃饭，with 语句会自动帮你买单、收拾桌子</span>
+
+<span class="code-comment"># 开始记录这次 Agent 调用</span>
+<span class="code-keyword">with</span> handler.start_agent(invocation) <span class="code-keyword">as</span> span:
+    
+    <span class="code-comment"># ========================================</span>
+    <span class="code-comment"># 这里放你的业务逻辑代码</span>
+    <span class="code-comment"># ========================================</span>
+    
+    <span class="code-comment"># 假设这里是你调用 AI 模型的代码</span>
+    <span class="code-comment"># 比如调用通义千问、ChatGPT 等</span>
+    result = agent.execute(user_query)
+    
+    <span class="code-comment"># 你可以在这里获取 AI 的结果</span>
+    <span class="code-function">print</span>(<span class="code-string">"AI 回复："</span>, result)
+    
+    <span class="code-comment"># ========================================</span>
+    <span class="code-comment"># with 语句会自动帮你完成以下事情：</span>
+    <span class="code-comment"># ========================================</span>
+    <span class="code-comment"># 1. 自动创建 Span（检查点）</span>
+    <span class="code-comment"># 2. 自动挂载 gen_ai.agent.name 等属性</span>
+    <span class="code-comment"># 3. 自动记录 Duration（耗时）和 Token Usage Metrics</span>
+    <span class="code-comment"># 4. 如果出异常，自动捕获并设置错误状态</span>
+    <span class="code-comment"># 5. 自动结束 Span，发送遥测数据</span>
+
+<span class="code-comment"># with 语句结束后，所有数据已经自动发送到观测平台了！</span>
+<span class="code-function">print</span>(<span class="code-string">"遥测数据已发送！"</span>)</pre>
+            </div>
+
+            <div class="code-explanation">
+                <h4>📖 代码解释</h4>
+                <ul>
+                    <li><code>with ... as ...</code>：这是 Python 的上下文管理器语法，保证资源正确释放</li>
+                    <li><code>handler.start_agent(invocation)</code>：告诉大管家"我要开始记录一个 Agent 调用了"</li>
+                    <li><code>as span</code>：<code>span</code> 是这次创建的"检查点"对象，你可以用它添加额外信息</li>
+                    <li><code>agent.execute(user_query)</code>：这是你的业务代码，调用 AI 模型</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>✅ with 语句的魔法：</strong>你不需要手动调用任何结束或发送的方法，with 语句会在代码块结束时自动处理一切。即使你的代码抛出了异常，with 也会确保数据正确记录。
+            </div>
+        </div>
+    </section>
+
+    <!-- 完整示例 -->
+    <section class="section" id="complete" style="background: rgba(255,255,255,0.02);">
+        <h2 class="section-title">📋 完整示例代码</h2>
+        <p class="section-subtitle">把上面的内容拼起来，就是一个完整的程序</p>
+
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">📝</div>
+                <h3 class="step-title">完整代码（可直接运行）</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-comment"># ============================================</span>
+<span class="code-comment"># 文件名：genai_observability_demo.py</span>
+<span class="code-comment"># 功能：演示如何使用 LoongSuite GenAI Utils 进行可观测性采集</span>
+<span class="code-comment"># 作者：你的大名</span>
+<span class="code-comment"># ============================================</span>
+
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 第一部分：导入所需的库</span>
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 导入获取 Handler 的函数</span>
+<span class="code-comment"># Handler 就像一个大管家，负责帮你记录所有遥测数据</span>
+<span class="code-keyword">from</span> opentelemetry.util.genai.extended_handler <span class="code-keyword">import</span> get_extended_telemetry_handler
+
+<span class="code-comment"># 导入 AgentInvocation 类</span>
+<span class="code-comment"># 这是记录单模板，用来填写这次 AI 调用的信息</span>
+<span class="code-keyword">from</span> opentelemetry.util.genai.invocation <span class="code-keyword">import</span> AgentInvocation
+
+
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 第二部分：初始化（只需做一次）</span>
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 获取 Handler 实例</span>
+<span class="code-comment"># 注意：get_extended_telemetry_handler() 使用单例模式</span>
+<span class="code-comment"># 无论调用多少次，返回的都是同一个 Handler 对象</span>
+handler = get_extended_telemetry_handler()
+
+<span class="code-function">print</span>(<span class="code-string">"✅ Handler 初始化完成！"</span>)
+
+
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 第三部分：封装一个函数，方便复用</span>
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-keyword">def</span> <span class="code-function">call_ai_agent</span>(user_query, agent_name=<span class="code-string">"my_agent"</span>, model=<span class="code-string">"qwen-turbo"</span>):
+    <span class="code-string">"""</span>
+    <span class="code-string">    调用 AI Agent 并自动记录遥测数据</span>
+    <span class="code-string">    </span>
+    <span class="code-string">    参数：</span>
+    <span class="code-string">        user_query (str): 用户的输入问题</span>
+    <span class="code-string">        agent_name (str): Agent 的名称，用于识别</span>
+    <span class="code-string">        model (str): 使用的 AI 模型名称</span>
+    <span class="code-string">    </span>
+    <span class="code-string">    返回：</span>
+    <span class="code-string">        str: AI 的回复内容</span>
+    <span class="code-string">    """</span>
+    
+    <span class="code-comment">    # 第一步：创建调用记录单（Invocation）</span>
+    <span class="code-comment">    # 填写这次 AI 调用的基本信息</span>
+    invocation = AgentInvocation(
+        agent_name=agent_name,           <span class="code-comment"># Agent 名字</span>
+        agent_id=<span class="code-string">"agent_123"</span>,           <span class="code-comment"># Agent 唯一 ID（实际项目中应该动态生成）</span>
+        input_tokens=<span code-number="">150</span>,                <span class="code-comment"># 输入 Token 数（实际项目中应该动态计算）</span>
+        output_tokens=<span class="code-number">80</span>,               <span class="code-comment"># 输出 Token 数（实际项目中应该动态计算）</span>
+        model=model                       <span class="code-comment"># 模型名称</span>
+    )
+    
+    <span class="code-comment">    # 第二步：使用 with 语句包裹业务逻辑</span>
+    <span class="code-comment">    # Handler 会自动记录这次调用的所有遥测数据</span>
+    <span class="code-keyword">    with</span> handler.start_agent(invocation) <span class="code-keyword">as</span> span:
+        
+        <span class="code-comment">        # ====================================</span>
+        <span class="code-comment">        # 这里放你的实际业务代码</span>
+        <span class="code-comment">        # ====================================</span>
+        
+        <span class="code-comment">        # 模拟调用 AI 模型（实际中替换为真实的 API 调用）</span>
+        <span class="code-comment">        # 比如：调用通义千问、OpenAI、Claude 等</span>
+        <span class="code-function">        print</span>(<span class="code-string">f"正在调用 AI Agent '{agent_name}'..."</span>)
+        
+        <span class="code-comment">        # 这里模拟 AI 回复（实际中应该是真实的 AI 调用结果）</span>
+        result = <span class="code-string">f"这是对 '{user_query}' 的回复"</span>
+        
+        <span class="code-comment">        # 可以在 Span 上添加自定义属性（可选）</span>
+        <span class="code-comment">        # span.set_attribute("custom.key", "value")</span>
+        
+        <span class="code-function">        print</span>(<span class="code-string">f"✅ Agent 调用完成！"</span>)
+        
+        <span class="code-keyword">        return</span> result
+
+
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-comment"># 第四部分：主程序入口</span>
+<span class="code-comment"># --------------------------------------------</span>
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    
+    <span class="code-function">    print</span>(<span class="code-string">"🚀 开始演示 GenAI Utils 可观测性采集\n"</span>)
+    
+    <span class="code-comment">    # 模拟用户提问</span>
+    user_question = <span class="code-string">"今天天气怎么样？"</span>
+    
+    <span class="code-comment">    # 调用 AI Agent（自动记录遥测数据）</span>
+    response = call_ai_agent(
+        user_query=user_question,
+        agent_name=<span class="code-string">"weather_assistant"</span>,
+        model=<span class="code-string">"qwen-turbo"</span>
+    )
+    
+    <span class="code-function">    print</span>(<span class="code-string">f"\n📝 最终回复：{response}"</span>)</pre>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 运行方法</div>
+                <ol style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                    <li>把上面的代码复制到一个文件中，命名为 <code>genai_observability_demo.py</code></li>
+                    <li>在命令行中进入文件所在目录</li>
+                    <li>运行命令：<code>python genai_observability_demo.py</code></li>
+                    <li>如果看到输出 "遥测数据已发送"，说明成功了！</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- 进阶用法 -->
+    <section class="section">
+        <h2 class="section-title">🚀 进阶用法</h2>
+        <p class="section-subtitle">掌握了基础，再来看看高级功能</p>
+
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">+</div>
+                <h3 class="step-title">错误处理与异常捕获</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-keyword">with</span> handler.start_agent(invocation) <span class="code-keyword">as</span> span:
+    <span class="code-keyword">    try</span>:
+        <span class="code-comment">        # 调用 AI 模型</span>
+        result = agent.execute(user_query)
+        
+<span class="code-keyword">    except</span> Exception <span class="code-keyword">as</span> e:
+        <span class="code-comment">        # 如果出错了，Handler 会自动记录错误信息</span>
+        <span class="code-comment">        # span 上会自动设置 error.type 和错误状态</span>
+        <span class="code-function">        print</span>(<span class="code-string">f"调用失败：{e}"</span>)
+        <span class="code-keyword">        raise</span>  <span class="code-comment"># 重新抛出异常，让 Handler 捕获并记录</span></pre>
+            </div>
+
+            <div class="code-explanation">
+                <h4>📖 代码解释</h4>
+                <ul>
+                    <li><code>try...except</code>：Python 的错误处理语法，捕获可能发生的异常</li>
+                    <li>即使发生异常，with 语句也会<strong>保证</strong> Span 正确结束并发送数据</li>
+                    <li>Handler 会自动在 Span 上记录 <code>error.type</code> 等错误信息</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <div class="step-header">
+                <div class="step-number">+</div>
+                <h3 class="step-title">添加自定义属性</h3>
+            </div>
+
+            <div class="code-block">
+                <pre><span class="code-keyword">with</span> handler.start_agent(invocation) <span class="code-keyword">as</span> span:
+    <span class="code-comment">    # 在 Span 上添加自定义属性</span>
+    <span class="code-comment">    # 这些属性会随遥测数据一起发送，方便后续查询和分析</span>
+    span.set_attribute(<span class="code-string">"user.id"</span>, <span class="code-string">"user_12345"</span>)
+    span.set_attribute(<span class="code-string">"user.level"</span>, <span class="code-string">"premium"</span>)
+    span.set_attribute(<span class="code-string">"request.priority"</span>, <span class="code-string">"high"</span>)
+    
+    <span class="code-comment">    # 执行业务逻辑</span>
+    result = agent.execute(user_query)</pre>
+            </div>
+
+            <div class="code-explanation">
+                <h4>📖 代码解释</h4>
+                <ul>
+                    <li><code>span.set_attribute(key, value)</code>：给 Span 添加自定义键值对</li>
+                    <li>这些属性会出现在观测平台上，方便你按用户、优先级等维度过滤和分析</li>
+                    <li>属性名建议遵循 <code>domain.name</code> 的命名规范，如 <code>user.id</code></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- 常见问题 -->
+    <section class="section" style="background: rgba(255,255,255,0.02);">
+        <h2 class="section-title">❓ 常见问题（FAQ）</h2>
+
+        <div class="step-card">
+            <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Q1: 我需要在每个函数里都写 Handler 吗？</h4>
+            <p>不需要！Handler 是<strong>单例模式</strong>，你在程序开头获取一次，全局都能用。建议把获取 Handler 的代码放在程序入口处，或者封装成一个工具函数。</p>
+        </div>
+
+        <div class="step-card">
+            <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Q2: 如果我的项目很大，怎么组织代码？</h4>
+            <p>建议创建一个 <code>telemetry.py</code> 文件，把所有与可观测性相关的逻辑封装进去：</p>
+            <div class="code-block">
+                <pre><span class="code-comment"># telemetry.py</span>
+<span class="code-keyword">from</span> opentelemetry.util.genai.extended_handler <span class="code-keyword">import</span> get_extended_telemetry_handler
+<span class="code-keyword">from</span> opentelemetry.util.genai.invocation <span class="code-keyword">import</span> AgentInvocation
+
+<span class="code-comment"># 全局 Handler</span>
+_handler = <span class="code-string">None</span>
+
+<span class="code-keyword">def</span> <span class="code-function">get_handler</span>():
+    <span class="code-string">"""获取全局 Handler"""</span>
+    <span class="code-keyword">    global</span> _handler
+    <span class="code-keyword">    if</span> _handler <span class="code-keyword">is None</span>:
+        _handler = get_extended_telemetry_handler()
+    <span class="code-keyword">    return</span> _handler
+
+<span class="code-keyword">def</span> <span class="code-function">create_agent_invocation</span>(**kwargs):
+    <span class="code-string">"""创建 AgentInvocation 的工厂函数"""</span>
+    <span class="code-keyword">    return</span> AgentInvocation(**kwargs)</pre>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Q3: 数据发送到哪里去了？</h4>
+            <p>默认情况下，Handler 会将遥测数据发送到 <strong>OpenTelemetry Collector</strong>（一个数据收集器）。你需要配置 Collector 的地址。如果没有 Collector，数据会打印在日志里或丢弃（取决于配置）。</p>
+        </div>
+
+        <div class="step-card">
+            <h4 style="color: var(--primary-color); margin-bottom: 1rem;">Q4: 对性能有影响吗？</h4>
+            <p>影响非常小！Handler 是<strong>异步发送</strong>数据的，不会阻塞你的业务代码。就像你发朋友圈，手机会在后台自动上传，不影响你继续刷别的。</p>
+        </div>
+    </section>
+
+    <!-- 总结 -->
+    <section class="section">
+        <h2 class="section-title">🎉 总结</h2>
+        <p class="section-subtitle">恭喜你，你已经学会了！</p>
+
+        <div class="step-card" style="text-align: center; padding: 3rem;">
+            <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">记住这三句话：</h3>
+            <div style="font-size: 1.2rem; line-height: 2.5;">
+                <p>1️⃣ <strong>找管家</strong> → <code>get_extended_telemetry_handler()</code></p>
+                <p>2️⃣ <strong>填单子</strong> → <code>AgentInvocation(...)</code></p>
+                <p>3️⃣ <strong>包起来</strong> → <code>with handler.start_agent(invocation):</code></p>
+            </div>
+            <p style="margin-top: 2rem; color: var(--text-secondary);">
+                就这么简单！现在你可以给你的 AI 应用加上可观测性了。<br>
+                遇到问题？回到上面的步骤再检查一遍，或者查看常见问题部分。
+            </p>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+            基于 LoongSuite GenAI Utils 编写 · 面向小白的 Python API 教程<br>
+            <a href="https://github.com/alibaba/loongsuite-semantic-conventions-genai" target="_blank" style="color: var(--primary-color);">查看官方文档</a>
+        </p>
+    </footer>
+
+    <script>
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
