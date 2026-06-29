@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langfuse Monitors 功能详解</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        langfuse: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            300: '#7ccafd',
+                            400: '#36b0fa',
+                            500: '#0c96eb',
+                            600: '#0077cc',
+                            700: '#005fa3',
+                            800: '#065285',
+                            900: '#0a466e',
+                            950: '#072c4d',
+                        },
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        },
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        },
+                        rose: {
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #0077cc 0%, #00a8e8 50%, #36b0fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0077cc, #36b0fa);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .measure-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .measure-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 119, 204, 0.15);
+        }
+
+        .timeline-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0077cc, #36b0fa);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
+        }
+
+        .config-row {
+            transition: background-color 0.2s ease;
+        }
+
+        .config-row:hover {
+            background-color: rgba(0, 119, 204, 0.03);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+
+        .status-green { background: #dcfce7; color: #15803d; }
+        .status-yellow { background: #fef9c3; color: #a16207; }
+        .status-red { background: #fee2e2; color: #b91c1c; }
+
+        .metric-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .toc-fixed {
+            position: sticky;
+            top: 24px;
+        }
+
+        pre[class*="language-"] {
+            margin: 0 !important;
+            border-radius: 12px !important;
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+        }
+
+        .alert-channel {
+            transition: all 0.2s ease;
+        }
+
+        .alert-channel:hover {
+            transform: scale(1.02);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .comparison-table tr:hover td {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-langfuse-500 to-langfuse-400 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                        L
+                    </div>
+                    <span class="font-semibold text-slate-900">Langfuse Monitors</span>
+                </div>
+                <div class="hidden md:flex items-center gap-6 text-sm">
+                    <a href="#overview" class="nav-link text-slate-600 hover:text-langfuse-600 font-medium">概述</a>
+                    <a href="#measures" class="nav-link text-slate-600 hover:text-langfuse-600 font-medium">Measures</a>
+                    <a href="#configuration" class="nav-link text-slate-600 hover:text-langfuse-600 font-medium">Configuration</a>
+                    <a href="#alerts" class="nav-link text-slate-600 hover:text-langfuse-600 font-medium">Alerts</a>
+                    <a href="#examples" class="nav-link text-slate-600 hover:text-langfuse-600 font-medium">示例</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-16 px-6">
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-langfuse-50 border border-langfuse-200 rounded-full text-langfuse-700 text-sm font-medium mb-8">
+                <span class="w-2 h-2 bg-langfuse-500 rounded-full animate-pulse"></span>
+                Langfuse 最新功能
+            </div>
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                <span class="gradient-text">Monitors</span>
+            </h1>
+            <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-8">
+                全面监控 LLM 应用性能的核心指标。从延迟、成本到质量评分，<br class="hidden md:block">
+                实时追踪应用健康状况，并在问题发生前主动告警。
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="#measures" class="px-6 py-3 bg-langfuse-600 hover:bg-langfuse-700 text-white rounded-xl font-medium transition-colors shadow-lg shadow-langfuse-500/20">
+                    查看 Measures
+                </a>
+                <a href="#configuration" class="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-medium transition-colors">
+                    配置指南
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 pb-24">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Sidebar TOC -->
+            <aside class="hidden lg:block">
+                <div class="toc-fixed space-y-1">
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">目录</div>
+                    <a href="#overview" class="block px-3 py-2 text-sm text-slate-600 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">功能概述</a>
+                    <a href="#measures" class="block px-3 py-2 text-sm text-slate-600 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Measures 详解</a>
+                    <div class="ml-4 space-y-1">
+                        <a href="#measure-latency" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Latency</a>
+                        <a href="#measure-cost" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Cost</a>
+                        <a href="#measure-quality" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Quality</a>
+                        <a href="#measure-volume" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Volume</a>
+                        <a href="#measure-error" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Error Rate</a>
+                        <a href="#measure-throughput" class="block px-3 py-1.5 text-xs text-slate-500 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Throughput</a>
+                    </div>
+                    <a href="#configuration" class="block px-3 py-2 text-sm text-slate-600 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Configuration</a>
+                    <a href="#alerts" class="block px-3 py-2 text-sm text-slate-600 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">Alert 配置</a>
+                    <a href="#examples" class="block px-3 py-2 text-sm text-slate-600 hover:text-langfuse-600 hover:bg-langfuse-50 rounded-lg transition-colors">实战示例</a>
+                </div>
+            </aside>
+
+            <!-- Content -->
+            <main class="lg:col-span-3 space-y-16">
+
+                <!-- Overview -->
+                <section id="overview" class="scroll-mt-32">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">功能概述</h2>
+                    <p class="text-slate-600 text-lg leading-relaxed mb-8">
+                        Langfuse Monitors 是一套面向生产环境的 LLM 应用监控解决方案。它允许你定义监控规则，
+                        基于多种 <strong>Measure（度量指标）</strong> 追踪应用性能，并在指标异常时自动触发告警。
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                            <div class="w-10 h-10 bg-langfuse-100 rounded-xl flex items-center justify-center text-langfuse-600 mb-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">多维度度量</h3>
+                            <p class="text-sm text-slate-600">支持延迟、成本、质量、请求量等多种核心指标监控</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">实时告警</h3>
+                            <p class="text-sm text-slate-600">指标超过阈值时，通过邮件、Slack、Webhook 即时通知</p>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">灵活配置</h3>
+                            <p class="text-sm text-slate-600">支持按项目、环境、标签等多维度过滤和聚合</p>
+                        </div>
+                    </div>
+
+                    <!-- Monitor 工作流程 -->
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 text-white">
+                        <h3 class="text-xl font-semibold mb-8">Monitor 工作流程</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
+                                <div class="font-medium mb-2">定义 Measure</div>
+                                <div class="text-sm text-slate-400">选择要监控的指标类型</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
+                                <div class="font-medium mb-2">设置阈值</div>
+                                <div class="text-sm text-slate-400">配置触发告警的边界条件</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
+                                <div class="font-medium mb-2">选择时间窗口</div>
+                                <div class="text-sm text-slate-400">定义监控的聚合周期</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">4</div>
+                                <div class="font-medium mb-2">配置告警</div>
+                                <div class="text-sm text-slate-400">设定通知渠道和接收人</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Measures -->
+                <section id="measures" class="scroll-mt-32">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">Measures 详解</h2>
+                    <p class="text-slate-600 leading-relaxed mb-8">
+                        Measure 是 Monitor 的核心，决定了你要监控什么。每个 Measure 都有特定的计算方式和适用场景。
+                    </p>
+
+                    <!-- Latency -->
+                    <div id="measure-latency" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-langfuse-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-langfuse-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Latency <span class="text-sm font-normal text-slate-500">延迟</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-green">核心指标</span>
+                                            <span class="text-xs text-slate-400">单位: 毫秒(ms)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">监控 LLM 请求的端到端延迟，从发送请求到接收到完整响应的时间。这是评估用户体验和系统性能最直接的指标。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">聚合方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">p50 / p75 / p90 / p95 / p99 / avg / max / min</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">threshold</code>
+                                            <span class="text-slate-500 text-sm ml-2">阈值 (ms)</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">例如: 2000 (2秒)</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">operator</code>
+                                            <span class="text-slate-500 text-sm ml-2">比较运算符</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">&gt; / &lt; / &gt;= / &lt;= / =</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-langfuse-50 border border-langfuse-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-langfuse-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">最佳实践</div>
+                                        <p class="text-sm text-slate-600">建议使用 <strong>p95</strong> 或 <strong>p99</strong> 来捕获尾部延迟，而不是平均值。平均值容易被少数极快请求拉低，掩盖真实的性能问题。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cost -->
+                    <div id="measure-cost" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Cost <span class="text-sm font-normal text-slate-500">成本</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-green">核心指标</span>
+                                            <span class="text-xs text-slate-400">单位: USD ($)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">追踪 LLM API 调用的累计成本。Langfuse 会自动根据 token 用量和模型定价计算每次请求的成本，Monitor 在此基础上进行聚合监控。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">聚合方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">sum / avg / cumulative</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">timeBucket</code>
+                                            <span class="text-slate-500 text-sm ml-2">时间分桶</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">1h / 6h / 1d / 7d</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">scope</code>
+                                            <span class="text-slate-500 text-sm ml-2">范围</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">per-request / total / per-user</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">成本预警场景</div>
+                                        <p class="text-sm text-slate-600">设置每小时成本上限，防止因异常流量或模型切换导致费用激增。建议结合 <code>per-user</code> 范围追踪单个用户的消费情况。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quality -->
+                    <div id="measure-quality" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Quality <span class="text-sm font-normal text-slate-500">质量评分</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-yellow">高级指标</span>
+                                            <span class="text-xs text-slate-400">单位: 0-1 或 0-100</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">基于 Langfuse Scores（评分系统）监控 LLM 输出的质量。可以追踪用户反馈评分、LLM-as-Judge 评分或自定义评估指标。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">scoreName</code>
+                                            <span class="text-slate-500 text-sm ml-2">评分名称</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">user-feedback / llm-as-judge / custom</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">聚合方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">avg / median / min / max</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">threshold</code>
+                                            <span class="text-slate-500 text-sm ml-2">阈值</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">例如: 0.8 (低于此值触发告警)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">评分来源</div>
+                                        <p class="text-sm text-slate-600">Quality Measure 依赖于 Langfuse Score 功能。确保你已经在应用代码中通过 <code>langfuse.score()</code> 或 UI 界面创建了评分数据。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volume -->
+                    <div id="measure-volume" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Volume <span class="text-sm font-normal text-slate-500">请求量</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-green">核心指标</span>
+                                            <span class="text-xs text-slate-400">单位: 请求数</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">监控 LLM 请求的数量。可用于追踪流量波动、检测异常峰值（如 DDoS 或 bot 攻击）或确认服务可用性。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">聚合方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">count / unique-count</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">groupBy</code>
+                                            <span class="text-slate-500 text-sm ml-2">分组维度</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">trace / user / model / none</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">threshold</code>
+                                            <span class="text-slate-500 text-sm ml-2">阈值</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">例如: 1000 (请求数/分钟)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-violet-50 border border-violet-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-violet-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">流量监控技巧</div>
+                                        <p class="text-sm text-slate-600">同时设置 <strong>过高</strong> 和 <strong>过低</strong> 两个阈值。过高可能表示攻击或循环，过低可能表示上游服务中断或配置错误。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Rate -->
+                    <div id="measure-error" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Error Rate <span class="text-sm font-normal text-slate-500">错误率</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-green">核心指标</span>
+                                            <span class="text-xs text-slate-400">单位: % (百分比)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">追踪 LLM 请求的失败比例。包括 API 错误、超时、速率限制、内容过滤等所有导致请求未能成功完成的场景。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">errorTypes</code>
+                                            <span class="text-slate-500 text-sm ml-2">错误类型</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">all / api_error / timeout / rate_limit / content_filter</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">计算方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">percentage / count</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">threshold</code>
+                                            <span class="text-slate-500 text-sm ml-2">阈值</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">例如: 5 (表示 5%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-rose-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">错误分类监控</div>
+                                        <p class="text-sm text-slate-600">建议针对不同类型的错误创建不同的 Monitor。例如，单独监控 <code>rate_limit</code>，以便在接近 API 提供商限制时提前收到告警。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Throughput -->
+                    <div id="measure-throughput" class="measure-card bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div class="p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-900">Throughput <span class="text-sm font-normal text-slate-500">吞吐量</span></h3>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="badge status-yellow">高级指标</span>
+                                            <span class="text-xs text-slate-400">单位: tokens/second</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="prose prose-slate max-w-none mb-6">
+                                <p class="text-slate-600">监控 LLM 生成的吞吐量，即每秒生成的 token 数量。这个指标对于流式 (streaming) 应用特别重要，直接影响用户体验的流畅度。</p>
+                            </div>
+
+                            <div class="bg-slate-50 rounded-xl p-6 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">配置参数</h4>
+                                <div class="space-y-3">
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">tokenType</code>
+                                            <span class="text-slate-500 text-sm ml-2">Token 类型</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">input / output / total</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">aggregation</code>
+                                            <span class="text-slate-500 text-sm ml-2">聚合方式</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">avg / p95 / p99</span>
+                                    </div>
+                                    <div class="config-row flex items-center justify-between py-2 px-3 rounded-lg">
+                                        <div>
+                                            <code class="text-langfuse-700 font-mono text-sm">threshold</code>
+                                            <span class="text-slate-500 text-sm ml-2">阈值</span>
+                                        </div>
+                                        <span class="text-sm text-slate-700">例如: 50 (tokens/second)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-cyan-50 border border-cyan-100 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-slate-900 mb-1">流式场景优化</div>
+                                        <p class="text-sm text-slate-600">对于 ChatGPT 类应用，用户感知到的 "速度" 主要由 <strong>output tokens/second</strong> 决定。监控此指标并确保其高于用户可接受的最低阈值（通常 > 10 t/s）。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Configuration -->
+                <section id="configuration" class="scroll-mt-32">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">Configuration 详解</h2>
+                    <p class="text-slate-600 leading-relaxed mb-8">
+                        Monitor Configuration 是定义监控规则的核心。一个完整的配置包含基本设置、Measure 选择、阈值条件和过滤规则。
+                    </p>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-8">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                            <h3 class="font-semibold text-slate-900">配置结构总览</h3>
+                        </div>
+                        <div class="p-6">
+<pre class="language-json"><code>{
+  "monitor": {
+    "id": "mon_prod_latency_p95",
+    "name": "Production API Latency",
+    "description": "Monitor P95 latency for production API calls",
+    "status": "active",
+    "projectId": "proj_xxxxx",
+
+    "measure": {
+      "type": "latency",
+      "config": {
+        "aggregation": "p95",
+        "operator": ">",
+        "threshold": 2000
+      }
+    },
+
+    "window": {
+      "type": "rolling",
+      "duration": "5m",
+      "step": "1m"
+    },
+
+    "filters": {
+      "environment": ["production"],
+      "tags": ["api", "critical"],
+      "models": ["gpt-4", "gpt-4-turbo"]
+    },
+
+    "alert": {
+      "channels": ["email", "slack"],
+      "severity": "warning",
+      "cooldown": "10m",
+      "message": "P95 latency exceeded 2s threshold"
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <h3 class="text-xl font-bold text-slate-900">配置项详细说明</h3>
+
+                        <!-- Basic Settings -->
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                                <h4 class="font-semibold text-slate-900">基础设置</h4>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="comparison-table w-full">
+                                    <thead>
+                                        <tr>
+                                            <th>字段</th>
+                                            <th>类型</th>
+                                            <th>必填</th>
+                                            <th>说明</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-sm">
+                                        <tr>
+                                            <td><code class="text-langfuse-700 font-mono">id</code></td>
+                                            <td>string</td>
+                                            <td>是</td>
+                                            <td>Monitor 唯一标识符，建议包含环境和指标信息</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code class="text-langfuse-700 font-mono">name</code></td>
+                                            <td>string</td>
+                                            <td>是</td>
+                                            <td>Monitor 显示名称，建议清晰描述监控目的</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code class="text-langfuse-700 font-mono">description</code></td>
+                                            <td>string</td>
+                                            <td>否</td>
+                                            <td>详细描述监控规则和用途</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code class="text-langfuse-700 font-mono">status</code></td>
+                                            <td>string</td>
+                                            <td>是</td>
+                                            <td>Monitor 状态: <code>active</code> / <code>paused</code> / <code>disabled</code></td>
+                                        </tr>
+                                        <tr>
+                                            <td><code class="text-langfuse-700 font-mono">projectId</code></td>
+                                            <td>string</td>
+                                            <td>是</td>
+                                            <td>所属项目 ID，Monitor 只会监控该项目的 Trace</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Window Config -->
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                                <h4 class="font-semibold text-slate-900">时间窗口 (Window)</h4>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 text-sm mb-4">定义数据聚合的时间范围和评估频率。</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">Rolling Window (滑动窗口)</div>
+                                        <p class="text-sm text-slate-600 mb-2">持续评估最近 N 分钟的数据，适合实时监控场景。</p>
+                                        <code class="text-xs bg-slate-200 px-2 py-1 rounded text-slate-700">{ "type": "rolling", "duration": "5m" }</code>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">Fixed Window (固定窗口)</div>
+                                        <p class="text-sm text-slate-600 mb-2">按固定时间间隔（如每小时）评估一次，适合周期性报表。</p>
+                                        <code class="text-xs bg-slate-200 px-2 py-1 rounded text-slate-700">{ "type": "fixed", "duration": "1h" }</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                                <h4 class="font-semibold text-slate-900">过滤条件 (Filters)</h4>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-slate-600 text-sm mb-4">通过筛选器精准定位监控范围，避免噪音数据干扰。</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">environment</div>
+                                        <p class="text-sm text-slate-600">按环境过滤: <code>production</code>, <code>staging</code>, <code>development</code></p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">tags</div>
+                                        <p class="text-sm text-slate-600">按标签过滤，支持自定义业务标签</p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">models</div>
+                                        <p class="text-sm text-slate-600">按模型过滤: <code>gpt-4</code>, <code>claude-3</code> 等</p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">users</div>
+                                        <p class="text-sm text-slate-600">按特定用户 ID 过滤，适合重点客户监控</p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">name</div>
+                                        <p class="text-sm text-slate-600">按 Trace/Span 名称过滤，支持通配符</p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-xl p-4">
+                                        <div class="font-medium text-slate-900 mb-2">metadata</div>
+                                        <p class="text-sm text-slate-600">按自定义元数据字段过滤</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Alerts -->
+                <section id="alerts" class="scroll-mt-32">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">Alert 配置</h2>
+                    <p class="text-slate-600 leading-relaxed mb-8">
+                        当 Monitor 检测到指标超过阈值时，Alert 配置决定了如何通知相关人员。Langfuse 支持多种通知渠道和高级告警策略。
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="alert-channel bg-white rounded-2xl border border-slate-200 p-6">
+                            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">Email</h3>
+                            <p class="text-sm text-slate-600 mb-4">发送邮件到指定地址，支持 HTML 格式。</p>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <code class="text-xs text-slate-700">{ "type": "email", "recipients": ["ops@company.com"] }</code>
+                            </div>
+                        </div>
+                        <div class="alert-channel bg-white rounded-2xl border border-slate-200 p-6">
+                            <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M6 15a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v7a2 2 0 01-2 2H6zm9.5 1.5V6.5a1 1 0 00-1-1h-9a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1z"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">Slack</h3>
+                            <p class="text-sm text-slate-600 mb-4">推送到 Slack 频道，包含图表和详细信息。</p>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <code class="text-xs text-slate-700">{ "type": "slack", "channel": "#alerts" }</code>
+                            </div>
+                        </div>
+                        <div class="alert-channel bg-white rounded-2xl border border-slate-200 p-6">
+                            <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                            </div>
+                            <h3 class="font-semibold text-slate-900 mb-2">Webhook</h3>
+                            <p class="text-sm text-slate-600 mb-4">发送 HTTP POST 请求到自定义端点。</p>
+                            <div class="bg-slate-50 rounded-lg p-3">
+                                <code class="text-xs text-slate-700">{ "type": "webhook", "url": "https://api.company.com/alerts" }</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                            <h3 class="font-semibold text-slate-900">高级告警策略</h3>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <div>
+                                <h4 class="font-medium text-slate-900 mb-2">Cooldown (冷却时间)</h4>
+                                <p class="text-sm text-slate-600 mb-2">两次告警之间的最小间隔，避免告警轰炸。</p>
+                                <code class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">"cooldown": "10m"  // 10分钟内同一Monitor只告警一次</code>
+                            </div>
+                            <div class="border-t border-slate-100 pt-6">
+                                <h4 class="font-medium text-slate-900 mb-2">Severity (严重级别)</h4>
+                                <p class="text-sm text-slate-600 mb-2">定义告警的紧急程度，影响通知方式和响应 SLA。</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="badge status-green">info</span>
+                                    <span class="badge status-yellow">warning</span>
+                                    <span class="badge status-red">critical</span>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-100 pt-6">
+                                <h4 class="font-medium text-slate-900 mb-2">Escalation (告警升级)</h4>
+                                <p class="text-sm text-slate-600 mb-2">配置多级告警，首次通知 on-call 工程师，长时间未处理则升级给主管。</p>
+                                <pre class="language-json"><code>{
+  "escalation": {
+    "levels": [
+      { "after": "0m", "notify": ["on-call"] },
+      { "after": "30m", "notify": ["team-lead"] },
+      { "after": "1h", "notify": ["manager"] }
+    ]
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Examples -->
+                <section id="examples" class="scroll-mt-32">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-6">实战示例</h2>
+
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">示例 1: 生产环境 P95 延迟监控</h3>
+                                    <p class="text-sm text-slate-500">当生产环境的 P95 延迟超过 2 秒时告警</p>
+                                </div>
+                            </div>
+                            <div class="p-6">
+<pre class="language-json"><code>{
+  "monitor": {
+    "id": "prod_latency_p95",
+    "name": "Production P95 Latency",
+    "status": "active",
+    "measure": {
+      "type": "latency",
+      "config": {
+        "aggregation": "p95",
+        "operator": ">",
+        "threshold": 2000
+      }
+    },
+    "window": {
+      "type": "rolling",
+      "duration": "5m"
+    },
+    "filters": {
+      "environment": ["production"]
+    },
+    "alert": {
+      "channels": [
+        { "type": "slack", "channel": "#alerts" }
+      ],
+      "severity": "warning",
+      "cooldown": "10m"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">示例 2: 每小时成本上限监控</h3>
+                                    <p class="text-sm text-slate-500">当每小时累计成本超过 50 美元时告警</p>
+                                </div>
+                            </div>
+                            <div class="p-6">
+<pre class="language-json"><code>{
+  "monitor": {
+    "id": "hourly_cost_limit",
+    "name": "Hourly Cost Limit",
+    "status": "active",
+    "measure": {
+      "type": "cost",
+      "config": {
+        "aggregation": "sum",
+        "operator": ">",
+        "threshold": 50,
+        "currency": "USD"
+      }
+    },
+    "window": {
+      "type": "fixed",
+      "duration": "1h"
+    },
+    "alert": {
+      "channels": [
+        { "type": "email", "recipients": ["finance@company.com"] }
+      ],
+      "severity": "critical",
+      "cooldown": "1h"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">示例 3: LLM 输出质量评分监控</h3>
+                                    <p class="text-sm text-slate-500">当 LLM-as-Judge 评分低于 0.8 时告警</p>
+                                </div>
+                            </div>
+                            <div class="p-6">
+<pre class="language-json"><code>{
+  "monitor": {
+    "id": "quality_score_llm_judge",
+    "name": "LLM Output Quality",
+    "status": "active",
+    "measure": {
+      "type": "quality",
+      "config": {
+        "scoreName": "llm-as-judge",
+        "aggregation": "avg",
+        "operator": "<",
+        "threshold": 0.8
+      }
+    },
+    "window": {
+      "type": "rolling",
+      "duration": "30m"
+    },
+    "filters": {
+      "tags": ["customer-facing"]
+    },
+    "alert": {
+      "channels": [
+        { "type": "slack", "channel": "#model-quality" },
+        { "type": "webhook", "url": "https://api.company.com/quality-alert" }
+      ],
+      "severity": "warning",
+      "cooldown": "15m"
+    }
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center gap-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-gradient-to-br from-langfuse-500 to-langfuse-400 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                        L
+                    </div>
+                    <span class="text-white font-semibold">Langfuse Monitors 功能详解</span>
+                </div>
+                <div class="text-sm">
+                    文档生成时间: 2026/06/29 · 基于 Langfuse 公开文档整理
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in TOC
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.toc-fixed a[href^="#"]');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active', 'text-langfuse-600', 'bg-langfuse-50');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active', 'text-langfuse-600', 'bg-langfuse-50');
+                }
+            });
+        });
+
+        // Animate measure cards on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.measure-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
